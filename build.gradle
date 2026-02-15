@@ -22,6 +22,8 @@ dependencies {
     // Jackson for JSON processing
     testImplementation 'com.fasterxml.jackson.core:jackson-databind:2.20.1'
     testImplementation 'com.fasterxml.jackson.core:jackson-annotations:2.20'
+
+    testImplementation 'org.slf4j:slf4j-simple:2.0.13'
 }
 
 test {

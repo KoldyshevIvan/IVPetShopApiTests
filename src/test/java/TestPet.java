@@ -1,6 +1,11 @@
+import io.qameta.allure.Feature;
+import io.qameta.allure.Owner;
+import io.qameta.allure.Severity;
+import io.qameta.allure.SeverityLevel;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.Test;
+import static io.qameta.allure.Allure.step;
 import static io.restassured.RestAssured.given;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -9,20 +14,28 @@ public class TestPet {
     private static final String BASE_URL = "http://5.181.109.28:9090/api/v3";
 
     @Test
+    @Feature("Pet")
+    @Severity(SeverityLevel.CRITICAL)
+    @Owner("Ivan Koldyshev")
     public void testDeleteNonexistentPet() {
-        Response response = given()
-                .contentType(ContentType.JSON)
-                .header("Accept", "application/json")
-                .when()
-                .delete(BASE_URL + "/pet/9999");
+        Response response = step("Отправить DELETE запрос на удаление несуществующего Pet", () ->
+                given()
+                        .contentType(ContentType.JSON)
+                        .header("Accept", "application/json")
+                        .when()
+                        .delete(BASE_URL + "/pet/9999"));
 
         int responseStatusCode = response.getStatusCode();
         String responseBody = response.getBody().asString();
 
-        assertEquals(200, responseStatusCode,
-                "Код ответа не совпал с ожидаемым. Ответ " + responseStatusCode);
+        step("Проверить, что статус-код ответа == 200", () ->
+                assertEquals(200, responseStatusCode,
+                        "Код ответа не совпал с ожидаемым. Ответ " + responseStatusCode)
+        );
 
-        assertEquals("Pet deleted", responseBody,
-                "Текст ошибки не совпал с ожидаемым. Получен: " + responseBody);
+        step("Проверить, что статус-код ответа == 200", () ->
+                assertEquals("Pet deleted", responseBody,
+                        "Текст ошибки не совпал с ожидаемым. Получен: " + responseBody)
+        );
     }
 }

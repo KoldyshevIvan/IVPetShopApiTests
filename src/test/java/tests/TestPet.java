@@ -8,6 +8,8 @@ import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import models.Pet;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import static io.qameta.allure.Allure.step;
 import static io.restassured.RestAssured.given;
@@ -47,6 +49,32 @@ public class TestPet {
     @Feature("Pet")
     @Severity(SeverityLevel.CRITICAL)
     @Owner("Ivan Koldyshev")
+    public void testGetNonexistentPet() {
+        Response response = step("Отправить GET запрос на получение информации о несуществующем Pet", () ->
+                given()
+                        .contentType(ContentType.JSON)
+                        .header("Accept", "application/json")
+                        .when()
+                        .get(BASE_URL + "/pet/9999"));
+
+        int responseStatusCode = response.getStatusCode();
+        String responseBody = response.getBody().asString();
+
+        step("Проверить, что статус-код ответа == 404", () ->
+                assertEquals(404, responseStatusCode,
+                        "Код ответа не совпал с ожидаемым. Ответ " + responseStatusCode)
+        );
+
+        step("Проверить, что текст ответа 'Pet not found'", () ->
+                assertEquals("Pet not found", responseBody,
+                        "Текст ошибки не совпал с ожидаемым. Получен: " + responseBody)
+        );
+    }
+
+    @Test
+    @Feature("Pet")
+    @Severity(SeverityLevel.CRITICAL)
+    @Owner("Ivan Koldyshev")
     public void testUpdateNonexistentPet() {
         Pet pet = new Pet();
         pet.setId(9999);
@@ -72,6 +100,45 @@ public class TestPet {
         step("Проверить, что текст ответа 'Pet not found'", () ->
                 assertEquals("Pet not found", responseBody,
                         "Текст ошибки не совпал с ожидаемым. Получен: " + responseBody)
+        );
+    }
+
+    @ParameterizedTest(name = "Добавление питомца со статусом: {2}")
+    @CsvSource({
+            "500, Pusha, available",
+            "501, Rizhulya, pending",
+            "502, Fenya, sold",
+            "503, Vasya, testStatus"
+    })
+    @Feature("Pet")
+    @Severity(SeverityLevel.CRITICAL)
+    @Owner("Ivan Koldyshev")
+    public void testNewPet(int id, String name, String status) {
+        Pet pet = new Pet();
+        pet.setId(id);
+        pet.setName(name);
+        pet.setStatus(status);
+
+        Response response = step("Отправить POST запрос на добавление нового Pet", () ->
+                given()
+                        .contentType(ContentType.JSON)
+                        .body(pet)
+                        .when()
+                        .post(BASE_URL + "/pet"));
+
+        int responseStatusCode = response.getStatusCode();
+
+        step("Проверить, что статус-код ответа == 200", () ->
+                assertEquals(200, responseStatusCode,
+                        "Код ответа не совпал с ожидаемым. Ответ \" + responseStatusCode")
+        );
+
+        step("Проверка параметров созданного питомца", () -> {
+                    Pet createdPet = response.as(Pet.class);
+                    assertEquals(pet.getId(), createdPet.getId(), "id питомца не совпадает с ожидаемым");
+                    assertEquals(pet.getName(), createdPet.getName(), "Имя питомца не совпадает с ожидаемым");
+                    assertEquals(pet.getStatus(), createdPet.getStatus(), "Статус питомца не совпадает с ожидаемым");
+                }
         );
     }
 }
